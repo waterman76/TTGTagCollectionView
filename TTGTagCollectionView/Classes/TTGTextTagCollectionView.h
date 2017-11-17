@@ -48,9 +48,9 @@
 
 @protocol TTGTextTagCollectionViewDelegate <NSObject>
 @optional
-- (BOOL)textTagCollectionView:(TTGTextTagCollectionView *)textTagCollectionView canTapTag:(NSString *)tagText atIndex:(NSUInteger)index currentSelected:(BOOL)currentSelected;
+- (BOOL)textTagCollectionView:(TTGTextTagCollectionView *)textTagCollectionView canTapTag:(NSString *)tagText withID:(NSNumber*)intID atIndex:(NSUInteger)index currentSelected:(BOOL)currentSelected;
 
-- (void)textTagCollectionView:(TTGTextTagCollectionView *)textTagCollectionView didTapTag:(NSString *)tagText atIndex:(NSUInteger)index selected:(BOOL)selected;
+- (void)textTagCollectionView:(TTGTextTagCollectionView *)textTagCollectionView didTapTag:(NSString *)tagText withID:(NSNumber*)intID atIndex:(NSUInteger)index selected:(BOOL)selected;
 
 - (void)textTagCollectionView:(TTGTextTagCollectionView *)textTagCollectionView updateContentSize:(CGSize)contentSize;
 @end
@@ -113,6 +113,16 @@
 
 - (void)addTags:(NSArray <NSString *> *)tags withConfig:(TTGTextTagConfig *)config;
 
+// Add tag and ID with default config, return false if ID is not unique
+- (BOOL)addTag:(NSString *)tag andID:(NSInteger)intID;
+
+- (BOOL)addTags:(NSArray <NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs;
+
+// Add tag and ID with custom config, return false if ID is not unique
+- (BOOL)addTag:(NSString *)tag andID:(NSInteger)intID withConfig:(TTGTextTagConfig *)config;
+
+- (BOOL)addTags:(NSArray <NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs withConfig:(TTGTextTagConfig *)config;
+
 // Insert tag with default config
 - (void)insertTag:(NSString *)tag atIndex:(NSUInteger)index;
 
@@ -123,6 +133,16 @@
 
 - (void)insertTags:(NSArray <NSString *> *)tags atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config;
 
+// Insert tag and ID with default config, return false if ID is not unique
+- (BOOL)insertTag:(NSString *)tag andID:(NSInteger)intID atIndex:(NSUInteger)index;
+
+- (BOOL)insertTags:(NSArray <NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs atIndex:(NSUInteger)index;
+
+// Insert tag and ID with custom config, return false if ID is not unique
+- (BOOL)insertTag:(NSString *)tag andID:(NSInteger)intID atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config;
+
+- (BOOL)insertTags:(NSArray <NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config;
+
 // Remove tag
 - (void)removeTag:(NSString *)tag;
 
@@ -130,8 +150,17 @@
 
 - (void)removeAllTags;
 
+// Remove tag with ID,  return false if ID doesn't exist
+- (BOOL)removeTagWithID:(NSInteger)intID;
+
+// Remove tag with ID,  return false if ID doesn't exist
+- (BOOL)existsID:(NSInteger)intID;
+
 // Update tag selected state
 - (void)setTagAtIndex:(NSUInteger)index selected:(BOOL)selected;
+
+// Update tag with ID selected state, return false if ID doesn't exist
+- (BOOL)setTagWithID:(NSInteger)intID selected:(BOOL)selected;
 
 // Update tag config
 - (void)setTagAtIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config;
@@ -142,6 +171,11 @@
 - (NSString *)getTagAtIndex:(NSUInteger)index;
 
 - (NSArray <NSString *> *)getTagsInRange:(NSRange)range;
+
+// Get ID
+- (NSNumber *)getIDAtIndex:(NSUInteger)index;
+
+- (NSArray <NSNumber *> *)getIDsInRange:(NSRange)range;
 
 // Get tag config
 - (TTGTextTagConfig *)getConfigAtIndex:(NSUInteger)index;
@@ -154,6 +188,13 @@
 - (NSArray <NSString *> *)allSelectedTags;
 
 - (NSArray <NSString *> *)allNotSelectedTags;
+
+// Get all IDs
+- (NSArray <NSNumber *> *)allIDs;
+
+- (NSArray <NSNumber *> *)allSelectedIDs;
+
+- (NSArray <NSNumber *> *)allNotSelectedIDs;
 
 /**
  * Returns the index of the tag located at the specified point.

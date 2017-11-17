@@ -16,6 +16,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *logLabel;
 
 @property (strong, nonatomic) NSArray *tags;
+@property (strong, nonatomic) NSArray *IDs;
 @end
 
 @implementation TTGExample1ViewController
@@ -39,6 +40,18 @@
             @"image’s", @"bottom", @"If", @"the", @"image", @"view’s", @"size", @"or",
             @"position", @"changes", @"the", @"button’s", @"position", @"automatically", @"adjusts", @"to", @"match"
     ];
+    _IDs = @[
+              @(1),
+              @(2), @(3), @(4),  @(41),  @(42),  @(43),
+              @(5), @(6), @(7),  @(44),  @(45),  @(46),  @(47),  @(48),  @(49),
+              @(1080), @(1081), @(1082), @(8), @(9), @(10),
+              @(10841), @(10842), @(10843), @(10844), @(10845), @(10846), @(10847),
+              @(1230), @(1231), @(1232), @(1233), @(1234), @(1235), @(1236),
+              @(11), @(12), @(13), @(10050), @(10051), @(10052), @(14), @(15),
+              @(200), @(16), @(201), @(17), @(202), @(18), @(203), @(204),
+              @(19), @(300), @(301), @(302), @(20), @(21), @(22), @(23),
+              @(100), @(101), @(102), @(103), @(104), @(105), @(106), @(107), @(108)
+              ];
 
     _logLabel.adjustsFontSizeToFitWidth = YES;
     _textTagCollectionView1.delegate = self;
@@ -103,7 +116,7 @@
     _textTagCollectionView2.verticalSpacing = 8;
 
     // Set tags
-    [_textTagCollectionView1 addTags:_tags];
+    [_textTagCollectionView1 addTags:_tags andIDs:_IDs];
     [_textTagCollectionView2 addTags:_tags];
 
     // Init selection
@@ -127,8 +140,13 @@
 
 #pragma mark - TTGTextTagCollectionViewDelegate
 
-- (void)textTagCollectionView:(TTGTextTagCollectionView *)textTagCollectionView didTapTag:(NSString *)tagText atIndex:(NSUInteger)index selected:(BOOL)selected {
-    _logLabel.text = [NSString stringWithFormat:@"Tap tag: %@, at: %ld, selected: %d", tagText, (long) index, selected];
+- (void)textTagCollectionView:(TTGTextTagCollectionView *)textTagCollectionView didTapTag:(NSString *)tagText withID:(NSNumber*)intID atIndex:(NSUInteger)index selected:(BOOL)selected {
+    if (intID == nil) {
+        _logLabel.text = [NSString stringWithFormat:@"Tap tag: %@, at: %ld, selected: %d", tagText, (long) index, selected];
+    }
+    else {
+        _logLabel.text = [NSString stringWithFormat:@"Tap tag: %@, withID: %ld at: %ld, selected: %d", tagText, (long)[intID intValue] ,(long) index, selected];
+    }
 }
 
 - (void)textTagCollectionView:(TTGTextTagCollectionView *)textTagCollectionView updateContentSize:(CGSize)contentSize {

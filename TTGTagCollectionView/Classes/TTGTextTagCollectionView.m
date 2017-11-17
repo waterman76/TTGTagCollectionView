@@ -78,6 +78,7 @@
 @property (nonatomic, strong) TTGTextTagConfig *config;
 @property (nonatomic, strong) UILabel *label;
 @property (assign, nonatomic) BOOL selected;
+@property (nonatomic, strong) NSNumber *intID;
 @end
 
 @implementation TTGTextTagLabel
@@ -94,6 +95,7 @@
     _label = [[UILabel alloc] initWithFrame:self.bounds];
     _label.textAlignment = NSTextAlignmentCenter;
     [self addSubview:_label];
+    _intID = nil;
 }
 
 - (void)layoutSubviews {
@@ -212,38 +214,79 @@
 }
 
 - (void)addTags:(NSArray <NSString *> *)tags {
-    [self insertTags:tags atIndex:_tagLabels.count withConfig:_defaultConfig copyConfig:NO];
+    [self insertTags:tags andIDs:nil atIndex:_tagLabels.count withConfig:_defaultConfig copyConfig:NO];
 }
 
 - (void)addTags:(NSArray<NSString *> *)tags withConfig:(TTGTextTagConfig *)config {
-    [self insertTags:tags atIndex:_tagLabels.count withConfig:config copyConfig:YES];
+    [self insertTags:tags andIDs:nil atIndex:_tagLabels.count withConfig:config copyConfig:YES];
 }
+
+- (BOOL)addTag:(NSString *)tag andID:(NSInteger)intID {
+    return [self insertTag:tag andID:intID atIndex:_tagLabels.count];
+}
+
+- (BOOL)addTags:(NSArray <NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs {
+    return [self insertTags:tags andIDs:IDs atIndex:_tagLabels.count withConfig:_defaultConfig copyConfig:NO];
+}
+
+
+- (BOOL)addTag:(NSString *)tag andID:(NSInteger)intID withConfig:(TTGTextTagConfig *)config {
+    return [self insertTag:tag andID:intID atIndex:_tagLabels.count withConfig:config];
+}
+
+- (BOOL)addTags:(NSArray <NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs withConfig:(TTGTextTagConfig *)config {
+    return [self insertTags:tags andIDs:IDs atIndex:_tagLabels.count withConfig:config copyConfig:YES];
+}
+
+
 
 - (void)insertTag:(NSString *)tag atIndex:(NSUInteger)index {
     if ([tag isKindOfClass:[NSString class]]) {
-        [self insertTags:@[tag] atIndex:index withConfig:_defaultConfig copyConfig:NO];
+        [self insertTags:@[tag] andIDs:nil atIndex:index withConfig:_defaultConfig copyConfig:NO];
     }
 }
 
 - (void)insertTag:(NSString *)tag atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config {
     if ([tag isKindOfClass:[NSString class]]) {
-        [self insertTags:@[tag] atIndex:index withConfig:config copyConfig:YES];
+        [self insertTags:@[tag] andIDs:nil atIndex:index withConfig:config copyConfig:YES];
     }
 }
 
 - (void)insertTags:(NSArray<NSString *> *)tags atIndex:(NSUInteger)index {
-    [self insertTags:tags atIndex:index withConfig:_defaultConfig copyConfig:NO];
+    [self insertTags:tags andIDs:nil atIndex:index withConfig:_defaultConfig copyConfig:NO];
 }
+
 
 - (void)insertTags:(NSArray<NSString *> *)tags atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config {
-    [self insertTags:tags atIndex:index withConfig:config copyConfig:YES];
+    [self insertTags:tags andIDs:nil atIndex:index withConfig:config copyConfig:YES];
 }
 
-- (void)insertTags:(NSArray<NSString *> *)tags atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config copyConfig:(BOOL)copyConfig {
-    if (![tags isKindOfClass:[NSArray class]] || index > _tagLabels.count || ![config isKindOfClass:[TTGTextTagConfig class]]) {
-        return;
+- (BOOL)insertTag:(NSString *)tag andID:(NSInteger)intID atIndex:(NSUInteger)index {
+    if ([tag isKindOfClass:[NSString class]]) {
+        NSNumber *numberID = [NSNumber numberWithInteger: intID];
+        return [self insertTags:@[tag] andIDs:@[numberID] atIndex:index withConfig:_defaultConfig copyConfig:NO];
     }
-    
+    return NO;
+}
+
+- (BOOL)insertTags:(NSArray <NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs atIndex:(NSUInteger)index {
+    return [self insertTags:tags andIDs:IDs atIndex:index withConfig:_defaultConfig copyConfig:NO];
+}
+
+- (BOOL)insertTag:(NSString *)tag andID:(NSInteger)intID atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config {
+    NSNumber *numberID = [NSNumber numberWithInteger: intID];
+    return [self insertTags:@[tag] andIDs:@[numberID] atIndex:index withConfig:config copyConfig:YES];
+}
+
+- (BOOL)insertTags:(NSArray<NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config {
+    return [self insertTags:tags andIDs:IDs atIndex:index withConfig:config copyConfig:YES];
+}
+
+- (BOOL)insertTags:(NSArray<NSString *> *)tags andIDs:(NSArray <NSNumber*> *)IDs atIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config copyConfig:(BOOL)copyConfig {
+    if (![tags isKindOfClass:[NSArray class]] || index > _tagLabels.count || ![config isKindOfClass:[TTGTextTagConfig class]] || (IDs != nil && tags.count != IDs.count)) {
+        return NO;
+    }
+
     if (copyConfig) {
         config = [config copy];
     }
@@ -253,8 +296,23 @@
         TTGTextTagLabel *label = [self newLabelForTagText:[tagText description] withConfig:config];
         [newTagLabels addObject:label];
     }
+    
+    NSUInteger tagIndex = 0;
+    for (NSNumber *idNumber in IDs) {
+        if (idNumber != nil && [self existsID:[idNumber integerValue]] ) {
+            return NO;
+        }
+        for (TTGTextTagLabel *label in newTagLabels) {
+            if (label.intID != nil && ([label.intID integerValue] == [idNumber integerValue]) ) {
+                return NO;
+            }
+        }
+        ((TTGTextTagLabel *)newTagLabels[tagIndex++]).intID = idNumber;
+    }
+    
     [_tagLabels insertObjects:newTagLabels atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(index, newTagLabels.count)]];
     [self reload];
+    return YES;
 }
 
 - (void)removeTag:(NSString *)tag {
@@ -286,6 +344,25 @@
     [self reload];
 }
 
+- (BOOL)removeTagWithID:(NSInteger)intID {
+    TTGTextTagLabel *labelToRemoved = [self getLabelwithID:intID];
+    if (labelToRemoved != nil) {
+        [_tagLabels removeObject:labelToRemoved];
+        [self reload];
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)existsID:(NSInteger)intID {
+    for (TTGTextTagLabel *label in _tagLabels) {
+        if (label.intID != nil && ([label.intID integerValue] == intID) ) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (void)setTagAtIndex:(NSUInteger)index selected:(BOOL)selected {
     if (index >= _tagLabels.count) {
         return;
@@ -293,6 +370,16 @@
 
     _tagLabels[index].selected = selected;
     [self reload];
+}
+
+- (BOOL)setTagWithID:(NSInteger)intID selected:(BOOL)selected {
+    TTGTextTagLabel *label = [self getLabelwithID:intID];
+    if (label != nil) {
+        label.selected = selected;
+        [self reload];
+        return YES;
+    }
+    return NO;
 }
 
 - (void)setTagAtIndex:(NSUInteger)index withConfig:(TTGTextTagConfig *)config {
@@ -330,6 +417,26 @@
         NSMutableArray *tags = [NSMutableArray new];
         for (TTGTextTagLabel *label in [_tagLabels subarrayWithRange:range]) {
             [tags addObject:[label.label.text copy]];
+        }
+        return [tags copy];
+    } else {
+        return nil;
+    }
+}
+
+- (NSNumber *)getIDAtIndex:(NSUInteger)index {
+    if (index < _tagLabels.count) {
+        return [_tagLabels[index].intID copy];
+    } else {
+        return nil;
+    }
+}
+
+- (NSArray <NSNumber *> *)getIDsInRange:(NSRange)range {
+    if (NSMaxRange(range) <= _tagLabels.count) {
+        NSMutableArray *tags = [NSMutableArray new];
+        for (TTGTextTagLabel *label in [_tagLabels subarrayWithRange:range]) {
+            [tags addObject:[label.intID copy]];
         }
         return [tags copy];
     } else {
@@ -391,6 +498,36 @@
     return [allTags copy];
 }
 
+- (NSArray <NSNumber *> *)allIDs {
+    NSMutableArray *allIDs = [NSMutableArray new];
+    for (TTGTextTagLabel *label in _tagLabels) {
+        if (label.intID != nil) {
+            [allIDs addObject:[label.intID copy]];
+        }
+    }
+    return [allIDs copy];
+}
+
+- (NSArray <NSNumber *> *)allSelectedIDs {
+    NSMutableArray *allIDs = [NSMutableArray new];
+    for (TTGTextTagLabel *label in _tagLabels) {
+        if (label.intID != nil && label.selected) {
+            [allIDs addObject:[label.intID copy]];
+        }
+    }
+    return [allIDs copy];
+}
+
+- (NSArray <NSNumber *> *)allNotSelectedIDs {
+    NSMutableArray *allIDs = [NSMutableArray new];
+    for (TTGTextTagLabel *label in _tagLabels) {
+        if (label.intID != nil && !label.selected) {
+            [allIDs addObject:[label.intID copy]];
+        }
+    }
+    return [allIDs copy];
+}
+
 - (NSInteger)indexOfTagAt:(CGPoint)point {
     // We expect the point to be a point wrt to the TTGTextTagCollectionView.
     // so convert this point first to a point wrt to the TTGTagCollectionView.
@@ -414,8 +551,8 @@
     if (_enableTagSelection) {
         TTGTextTagLabel *label = _tagLabels[index];
         
-        if ([self.delegate respondsToSelector:@selector(textTagCollectionView:canTapTag:atIndex:currentSelected:)]) {
-            return [self.delegate textTagCollectionView:self canTapTag:label.label.text atIndex:index currentSelected:label.selected];
+        if ([self.delegate respondsToSelector:@selector(textTagCollectionView:canTapTag:withID:atIndex:currentSelected:)]) {
+            return [self.delegate textTagCollectionView:self canTapTag:label.label.text withID:label.intID atIndex:index currentSelected:label.selected];
         } else {
             return YES;
         }
@@ -440,8 +577,8 @@
             [self updateStyleAndFrameForLabel:label];
         }
         
-        if ([_delegate respondsToSelector:@selector(textTagCollectionView:didTapTag:atIndex:selected:)]) {
-            [_delegate textTagCollectionView:self didTapTag:label.label.text atIndex:index selected:label.selected];
+        if ([_delegate respondsToSelector:@selector(textTagCollectionView:didTapTag:withID:atIndex:selected:)]) {
+            [_delegate textTagCollectionView:self didTapTag:label.label.text withID:label.intID atIndex:index selected:label.selected];
         }
     }
 }
@@ -593,6 +730,15 @@
     label.config = config;
     [self updateStyleAndFrameForLabel:label];
     return label;
+}
+
+- (TTGTextTagLabel *)getLabelwithID:(NSInteger)intID {
+    for (TTGTextTagLabel *label in _tagLabels) {
+        if (label.intID != nil && ([label.intID integerValue] == intID)) {
+            return label;
+        }
+    }
+    return nil;
 }
 
 @end
